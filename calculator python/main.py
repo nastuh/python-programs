@@ -32,7 +32,7 @@ equation_text = ""
 equation_label = StringVar()
 
 label = tk.Label(window, textvariable=equation_label, font=('consolas',20), 
-                 bg="white", width=24, height=2)
+                 bg="black", width=24, height=2)
 label.pack()
 
 frame = tk.Frame(window)
