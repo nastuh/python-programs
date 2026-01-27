@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Конфигурация
-BOT_TOKEN = "7942902682:AAHh8prFaXs-byLirgjF4SWNYnpQyM8f2xY"  # Замените на ваш токен
+BOT_TOKEN = "your_token"  # Замените на ваш токен
 
 # Инициализация
 bot = Bot(token=BOT_TOKEN)
