@@ -5,10 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 
 # --- НАСТРОЙКИ (ЗАМЕНИТЕ НА СВОИ) ---
-TG_TOKEN = '8310589058:AAGKQdGgpqJbD-wBA98uxozSNPOdYRYG5OA'
-DC_TOKEN = 'MTQzNzcxMTM2MTMyODI4MzcwMA.GvutkW.A04e55bjrkA94wXu0Q6qigzpfUCETNWUwTZHaw'
-TG_CHAT_ID = -1005133542087 # ID чата/канала Telegram
-DC_CHANNEL_ID = 1405664986763624558 # ID канала Discord
+
 
 # --- ИНИЦИАЛИЗАЦИЯ БОТОВ ---
 tg_bot = Bot(token=TG_TOKEN)
@@ -93,4 +90,5 @@ async def main():
     )
 
 if __name__ == "__main__":
+
     asyncio.run(main())
