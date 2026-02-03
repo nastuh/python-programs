@@ -15,7 +15,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ВАЖНО: замените на ваш токен бота (без пробелов!)
-BOT_TOKEN = "7694434912:AAFHqjPl_AmaW7b1wQB1KjZoUrHwDbwRY_U"
+BOT_TOKEN = "your_token"
 
 # Файл для сохранения данных
 DATA_FILE = "bot_data.json"
