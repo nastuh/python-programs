@@ -1,0 +1,25 @@
+{
+  "1491362479": {
+    "steps": 3,
+    "inventory": [
+      {
+        "name": "Магический кристалл",
+        "description": "Кристалл, мерцающий изнутри",
+        "rarity": "rare"
+      },
+      {
+        "name": "Перо птицы",
+        "description": "Яркое перо неизвестной птицы",
+        "rarity": "common"
+      }
+    ],
+    "last_step_time": null,
+    "discovered_locations": [
+      "Пляж",
+      "Лесная опушка",
+      "Глубокий лес"
+    ],
+    "current_location": "Пляж",
+    "coins": 6
+  }
+}
