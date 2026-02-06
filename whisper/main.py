@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 # Твой токен
-API_TOKEN = '8504339437:AAGT8etG6JKBNEARMKl-YV9b9yEcS65BjHs'
+API_TOKEN = 'your_token'
 
 logging.basicConfig(level=logging.INFO)
 
