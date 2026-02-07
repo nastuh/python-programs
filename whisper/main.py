@@ -1,85 +1,87 @@
-
-import logging
-import hashlib
 import asyncio
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+import discord
+from discord import app_commands
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
 
-# Твой токен
-API_TOKEN = 'your_token'
+# --- КОНФИГУРАЦИЯ ---
+TG_TOKEN = 'ТВОЙ_ТГ_ТОКЕН'
+DS_TOKEN = 'ТВОЙ_ДС_ТОКЕН'
 
-logging.basicConfig(level=logging.INFO)
+# Инициализация Telegram
+tg_bot = Bot(token=TG_TOKEN)
+dp = Dispatcher(tg_bot)
 
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher()
+# Инициализация Discord
+class DiscordClient(discord.Client):
+    def __init__(self):
+        intents = discord.Intents.default()
+        super().__init__(intents=intents)
+        self.tree = app_commands.CommandTree(self)
 
-# Хранилище для шепотов
-whispers = {}
+    async def setup_hook(self):
+        await self.tree.sync()
 
-@dp.inline_query()
-async def inline_whisper(inline_query: InlineQuery):
-    text = inline_query.query.strip()
-    
-    if not text or not text.startswith('@'):
+ds_client = DiscordClient()
+
+# --- ЛОГИКА TELEGRAM (Inline Whisper) ---
+@dp.inline_handler()
+async def tg_inline_whisper(inline_query: types.InlineQuery):
+    query = inline_query.query.split(maxsplit=1)
+    if len(query) < 2:
         return
 
-    try:
-        # Разбиваем строку: @username сообщение
-        parts = text.split(' ', 1)
-        target_user = parts[0].replace('@', '').lower()
-        message = parts[1] if len(parts) > 1 else "..."
-    except Exception:
-        return
-
-    # Уникальный ID
-    whisper_id = hashlib.md5(text.encode()).hexdigest()
-    whispers[whisper_id] = {
-        'target': target_user,
-        'message': message,
-        'sender': inline_query.from_user.full_name
-    }
-
-    # Кнопка
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Посмотреть шепот 🔓", callback_data=f"read_{whisper_id}")]
-    ])
+    target_user = query[0]  # Например, @username
+    secret_text = query[1]
 
     results = [
-        InlineQueryResultArticle(
-            id=whisper_id,
-            title=f"Шепот для @{target_user}",
-            description="Только он(а) сможет прочитать",
-            input_message_content=InputTextMessageContent(
-                message_text=f"🤫 У меня есть секрет для @{target_user}..."
+        types.InlineQueryResultArticle(
+            id='1',
+            title=f"Шепот для {target_user}",
+            input_message_content=types.InputTextMessageContent(
+                f"🤫 Секретное сообщение для {target_user}..."
             ),
-            reply_markup=kb
+            reply_markup=types.InlineKeyboardMarkup().add(
+                types.InlineKeyboardButton(
+                    "Открыть 🔓", 
+                    callback_data=f"whisper:{target_user}:{secret_text}"
+                )
+            )
         )
     ]
+    await tg_bot.answer_inline_query(inline_query.id, results=results, cache_time=1)
+
+@dp.callback_query_handler(lambda c: c.data.startswith('whisper:'))
+async def process_whisper(callback_query: types.CallbackQuery):
+    _, target, text = callback_query.data.split(':', 2)
     
-    await inline_query.answer(results=results, cache_time=1)
-
-@dp.callback_query(F.data.startswith('read_'))
-async def process_callback_read(callback_query: CallbackQuery):
-    whisper_id = callback_query.data.split('_')[1]
-    whisper = whispers.get(whisper_id)
-
-    if not whisper:
-        await callback_query.answer("Секрет не найден или бот перезагружен.", show_alert=True)
-        return
-
-    # Проверяем username (без учета регистра)
-    current_user = callback_query.from_user.username.lower() if callback_query.from_user.username else ""
-    
-    if current_user == whisper['target']:
-        await callback_query.answer(f"От {whisper['sender']}:\n{whisper['message']}", show_alert=True)
+    # Проверка, тот ли это пользователь (по username)
+    if f"@{callback_query.from_user.username}" == target:
+        await callback_query.answer(text, show_alert=True)
     else:
-        await callback_query.answer("Это не для тебя! 🤐", show_alert=True)
+        await callback_query.answer("Это сообщение не для тебя! ❌", show_alert=True)
 
+# --- ЛОГИКА DISCORD (Slash Command) ---
+@ds_client.tree.command(name="whisper", description="Отправить секрет")
+async def ds_whisper(interaction: discord.Interaction, target: discord.Member, message: str):
+    # В дискорде отправляем уведомление в чат, а текст — в ЛС
+    await interaction.response.send_message(
+        f"🤫 {interaction.user.mention} отправил секрет для {target.mention}!", 
+        ephemeral=False 
+    )
+    try:
+        await target.send(f"✉️ Тебе шепнули в Discord: {message}")
+    except:
+        await interaction.followup.send("Не удалось отправить ЛС (закрыто у юзера)", ephemeral=True)
+
+# --- ЗАПУСК ОБОИХ БОТОВ ---
 async def main():
-    await dp.start_polling(bot)
+    # Запускаем Discord в фоне
+    loop = asyncio.get_event_loop()
+    loop.create_task(ds_client.start(DS_TOKEN))
+    
+    # Запускаем Telegram (polling)
+    executor.start_polling(dp, skip_updates=True)
 
 if __name__ == '__main__':
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("Бот выключен")
+    asyncio.run(main())
